@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Frisbeegolf Lite</title>
+  <style>
+    :root { --bg:#f6f7f9; --card:#ffffff; --text:#151923; --muted:#667085; --line:#d0d5dd; --accent:#2563eb; --good:#16a34a; --warn:#d97706; --danger:#dc2626; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:var(--bg); color:var(--text); }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 14px; padding-bottom: 90px; }
+    h1 { font-size: 24px; margin: 8px 0 12px; }
+    h2 { font-size: 18px; margin: 0 0 10px; }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:16px; margin:12px 0; box-shadow: 0 2px 10px rgba(16,24,40,.04); }
+    label { display:block; font-size: 13px; color:var(--muted); margin-bottom:6px; }
+    input, select, textarea { width:100%; border:1px solid var(--line); border-radius:12px; padding:12px; font-size:16px; background:white; color:var(--text); }
+    textarea { min-height: 70px; }
+    .row { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    .row3 { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; }
+    button { border:0; border-radius:14px; padding:13px 14px; font-size:16px; font-weight:700; background:#e5e7eb; color:var(--text); cursor:pointer; }
+    button.primary { background:var(--accent); color:#fff; }
+    button.good { background:var(--good); color:#fff; }
+    button.warn { background:var(--warn); color:#fff; }
+    button.danger { background:var(--danger); color:#fff; }
+    button.ghost { background:#eef2ff; color:#1d4ed8; }
+    button:active { transform: scale(.99); }
+    .hidden { display:none !important; }
+    .tabs { display:flex; gap:8px; position:sticky; top:0; z-index:3; padding:8px 0; background:var(--bg); }
+    .tabs button { flex:1; padding:10px; font-size:14px; }
+    .tabs button.active { background:var(--accent); color:#fff; }
+    .muted { color:var(--muted); font-size:14px; }
+    .big { font-size: 42px; font-weight: 800; text-align:center; margin:6px 0; }
+    .scoreNav { display:grid; grid-template-columns: 1fr 1.4fr 1fr; align-items:center; gap:10px; margin:8px 0; }
+    .scoreNav button { min-height:64px; font-size:22px; }
+    .puttbox { background:#f8fafc; border:1px solid var(--line); border-radius:16px; padding:12px; margin:12px 0; }
+    .puttgrid { display:grid; grid-template-columns: repeat(6, 1fr); gap:6px; margin-top:8px; }
+    .puttgrid button { padding:10px 8px; font-size:14px; }
+    .center { text-align:center; }
+    .scoregrid { display:grid; grid-template-columns: repeat(5, 1fr); gap:8px; margin:14px 0; }
+    .scoregrid button { min-height: 58px; font-size:18px; }
+    .navrow { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    .pill { display:inline-block; padding:5px 9px; border-radius:999px; background:#eef2ff; color:#1d4ed8; font-weight:700; margin:2px; font-size:13px; }
+    .summary { display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; text-align:center; }
+    .summary div { background:#f2f4f7; border-radius:14px; padding:10px; }
+    .summary b { display:block; font-size:22px; }
+    .summaryCard { background:#fff; border:1px solid var(--line); border-radius:18px; padding:12px; margin:12px 0; }
+    .compactSummary { margin:10px 0 8px; }
+    table { width:100%; border-collapse: collapse; font-size:14px; }
+    th, td { border-bottom:1px solid var(--line); padding:9px 6px; text-align:left; }
+    th { color:var(--muted); font-weight:700; }
+    .smallbtn { padding:8px 10px; font-size:13px; border-radius:10px; }
+    .holelist { display:grid; grid-template-columns: repeat(3, 1fr); gap:6px; margin-top:10px; }
+    .holelist button { font-size:13px; padding:8px; font-weight:600; }
+    .footerbar { position:fixed; left:0; right:0; bottom:0; background:rgba(255,255,255,.94); border-top:1px solid var(--line); padding:10px 14px; backdrop-filter: blur(8px); }
+    .footerinner { max-width:720px; margin:0 auto; display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    @media (max-width:480px){ .row,.row3{grid-template-columns:1fr;} .scoregrid{grid-template-columns: repeat(3, 1fr);} .summary{grid-template-columns:1fr 1fr;} .scoreNav{grid-template-columns:.8fr 1.4fr .8fr;} .scoreNav button{min-height:56px;} .puttgrid{grid-template-columns: repeat(3, 1fr);} }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Frisbeegolf Lite</h1>
+  <div class="tabs">
+    <button id="tabPlay" class="active" onclick="showTab('play')">Pelaa</button>
+    <button id="tabCourses" onclick="showTab('courses')">Kentät</button>
+    <button id="tabHistory" onclick="showTab('history')">Historia</button>
+  </div>
+
+  <section id="play">
+    <div class="card" id="startCard">
+      <h2>Uusi kierros</h2>
+      <div class="row">
+        <div><label>Päivämäärä</label><input type="date" id="dateInput"></div>
+        <div><label>Kenttä</label><select id="courseSelect"></select></div>
+      </div>
+      <div class="row3" style="margin-top:10px">
+        <div><label>Kierrostyyppi</label><select id="typeInput"><option value="harjoitus">harjoitus</option><option value="viikkokisa">viikkokisa</option><option value="kilpailu">kilpailu</option></select></div>
+        <div><label>Tuuli</label><select id="windInput"><option value="0">0 ei</option><option value="1">1 heikko</option><option value="2">2 kohtalainen</option><option value="3">3 kova</option></select></div>
+        <div><label>Sade</label><select id="rainInput"><option value="0">ei</option><option value="1">kyllä</option></select></div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <div><label>Fiilis</label><select id="moodInput"><option value="">ei arviota</option><option value="1">1 huono</option><option value="2">2 ok</option><option value="3">3 hyvä</option><option value="4">4 erinomainen</option></select></div>
+        <div><label>Huomio</label><input id="noteInput" placeholder="esim. putti hyvä"></div>
+      </div>
+      <button class="primary" style="width:100%; margin-top:12px" onclick="startRound()">Aloita kierros</button>
+      <p class="muted">Vinkki: lisää ensin omat kentät Kentät-välilehdellä. Mukana on valmiina 9-väyläinen ja 18-väyläinen mallikenttä.</p>
+    </div>
+
+    <div class="card hidden" id="roundCard">
+      <div class="center">
+        <div class="muted" id="courseName"></div>
+        <h2 id="holeTitle">Väylä</h2>
+        <div>Par <span class="pill" id="holePar">3</span></div>
+      </div>
+      <div class="summaryCard compactSummary">
+        <div class="summary">
+          <div><span class="muted">Heitot</span><b id="sumScore">0</b></div>
+          <div><span class="muted">Par</span><b id="sumPar">0</b></div>
+          <div><span class="muted">Tulos</span><b id="sumRel">0</b></div>
+          <div><span class="muted">1-putti %</span><b id="sumPutt">–</b></div>
+        </div>
+      </div>
+      <div class="scoreNav">
+        <button onclick="adjustScore(-1)" aria-label="Vähennä tulosta">−</button>
+        <div class="center">
+          <div class="big" id="holeScore">–</div>
+          <div class="muted" id="holeRelative">Paina + tai −</div>
+        </div>
+        <button class="primary" onclick="adjustScore(1)" aria-label="Lisää tulosta">+</button>
+      </div>
+      <div class="row3">
+        <button onclick="prevHole()">← Edellinen</button>
+        <button onclick="clearHole()">Tyhjennä</button>
+        <button onclick="nextHole()">Seuraava →</button>
+      </div>
+      <div class="puttbox">
+        <div><b>Puttietäisyys</b> <span class="muted">(~15 m)</span></div>
+        <div class="muted" id="puttHelp">Merkitse monennellako heitolla kiekko oli puttietäisyydellä.</div>
+        <div class="puttgrid">
+          <button onclick="setPuttAt(null)">Ei tietoa</button>
+          <button onclick="setPuttAt(1)">1</button>
+          <button onclick="setPuttAt(2)">2</button>
+          <button onclick="setPuttAt(3)">3</button>
+          <button onclick="setPuttAt(4)">4</button>
+          <button onclick="setPuttAt(5)">5+</button>
+        </div>
+      </div>
+      <div class="holelist" id="holeButtons"></div>
+      <button class="good" style="width:100%; margin-top:12px" onclick="saveRound()">Tallenna kierros</button>
+      <button class="danger" style="width:100%; margin-top:8px" onclick="cancelRound()">Peru kierros</button>
+    </div>
+  </section>
+
+  <section id="courses" class="hidden">
+    <div class="card">
+      <h2>Lisää / muokkaa kenttää</h2>
+      <input type="hidden" id="editCourseId">
+      <label>Kentän nimi</label><input id="courseNameInput" placeholder="esim. Mukkula">
+      <div class="row" style="margin-top:10px">
+        <div><label>Väylien määrä</label><select id="holesCount" onchange="renderParInputs()"><option>9</option><option selected>18</option></select></div>
+        <div><label>Oletus par</label><select id="defaultPar" onchange="fillDefaultPar()"><option>3</option><option>4</option><option>5</option></select></div>
+      </div>
+      <div id="parInputs" class="holelist"></div>
+      <button class="primary" style="width:100%; margin-top:12px" onclick="saveCourse()">Tallenna kenttä</button>
+      <button style="width:100%; margin-top:8px" onclick="resetCourseForm()">Tyhjennä lomake</button>
+    </div>
+    <div class="card">
+      <h2>Tallennetut kentät</h2>
+      <div id="coursesList"></div>
+    </div>
+  </section>
+
+  <section id="history" class="hidden">
+    <div class="card">
+      <h2>Kierroshistoria</h2>
+      <div class="row">
+        <button class="primary" onclick="downloadCSV()">Vie CSV</button>
+        <button onclick="copyCSV()">Kopioi CSV</button>
+      </div>
+      <p class="muted">CSV avautuu Excelissä, Google Sheetsissä ja SPSS:ssä. Ensimmäisellä rivillä ovat muuttujien nimet.</p>
+      <div id="historyList"></div>
+    </div>
+  </section>
+</div>
+
+<div class="footerbar" id="footerBar">
+  <div class="footerinner">
+    <button onclick="downloadCSV()">Vie CSV</button>
+    <button class="primary" onclick="showTab('play')">Uusi kierros</button>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'fg_lite_v1';
+let state = loadState();
+let currentRound = null;
+let currentHole = 0;
+
+function today(){ return new Date().toISOString().slice(0,10); }
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+function loadState(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if(raw){ try { return JSON.parse(raw); } catch(e){} }
+  return { courses:[
+    {id:uid(), name:'Mallikenttä 9 väylää', pars:[3,3,3,3,3,3,3,3,3]},
+    {id:uid(), name:'Mallikenttä 18 väylää', pars:[3,3,4,3,3,4,3,3,3,4,3,3,5,3,3,4,3,3]}
+  ], rounds:[] };
+}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+function showTab(tab){
+  for(const id of ['play','courses','history']) document.getElementById(id).classList.toggle('hidden', id!==tab);
+  for(const id of ['tabPlay','tabCourses','tabHistory']) document.getElementById(id).classList.remove('active');
+  document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1)).classList.add('active');
+  refreshAll();
+  updateFooterVisibility();
+}
+
+function refreshAll(){ renderCourseSelect(); renderCoursesList(); renderHistory(); renderParInputs(); }
+function renderCourseSelect(){
+  const sel = document.getElementById('courseSelect');
+  const old = sel.value;
+  sel.innerHTML = '';
+  state.courses.forEach(c => { const o=document.createElement('option'); o.value=c.id; o.textContent=`${c.name} (${c.pars.length} väylää)`; sel.appendChild(o); });
+  if(old) sel.value = old;
+}
+function renderParInputs(){
+  const n = Number(document.getElementById('holesCount').value || 18);
+  const box = document.getElementById('parInputs'); box.innerHTML='';
+  for(let i=1;i<=n;i++){
+    const inp = document.createElement('input'); inp.type='number'; inp.min='3'; inp.max='5'; inp.step='1'; inp.value='3'; inp.id='par_'+i; inp.placeholder='p'+i; inp.setAttribute('aria-label','Par '+i);
+    box.appendChild(inp);
+  }
+}
+function fillDefaultPar(){
+  const val = document.getElementById('defaultPar').value;
+  document.querySelectorAll('#parInputs input').forEach(i => i.value = val);
+}
+function saveCourse(){
+  const name = document.getElementById('courseNameInput').value.trim();
+  if(!name) return alert('Anna kentän nimi.');
+  const n = Number(document.getElementById('holesCount').value || 18);
+  const pars = [];
+  for(let i=1;i<=n;i++) pars.push(Number(document.getElementById('par_'+i).value || 3));
+  const editId = document.getElementById('editCourseId').value;
+  if(editId){
+    const c = state.courses.find(x=>x.id===editId); c.name=name; c.pars=pars;
+  } else state.courses.push({id:uid(), name, pars});
+  saveState(); resetCourseForm(); refreshAll(); alert('Kenttä tallennettu.');
+}
+function editCourse(id){
+  const c = state.courses.find(x=>x.id===id); if(!c) return;
+  document.getElementById('editCourseId').value = c.id;
+  document.getElementById('courseNameInput').value = c.name;
+  document.getElementById('holesCount').value = String(c.pars.length);
+  renderParInputs();
+  c.pars.forEach((p,i)=>{ const el=document.getElementById('par_'+(i+1)); if(el) el.value=p; });
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function deleteCourse(id){
+  if(!confirm('Poistetaanko kenttä? Vanhat kierrokset säilyvät historiassa.')) return;
+  state.courses = state.courses.filter(c=>c.id!==id); saveState(); refreshAll();
+}
+function resetCourseForm(){
+  document.getElementById('editCourseId').value=''; document.getElementById('courseNameInput').value=''; document.getElementById('holesCount').value='18'; renderParInputs(); fillDefaultPar();
+}
+function renderCoursesList(){
+  const box=document.getElementById('coursesList'); box.innerHTML='';
+  if(!state.courses.length){ box.innerHTML='<p class="muted">Ei kenttiä.</p>'; return; }
+  state.courses.forEach(c=>{
+    const div=document.createElement('div'); div.className='card'; div.style.boxShadow='none';
+    div.innerHTML=`<b>${escapeHtml(c.name)}</b><br><span class="muted">${c.pars.length} väylää, par ${c.pars.reduce((a,b)=>a+b,0)}</span><br><span class="muted">${c.pars.map((p,i)=>'p'+(i+1)+'='+p).join(', ')}</span><div class="row" style="margin-top:10px"><button class="smallbtn" onclick="editCourse('${c.id}')">Muokkaa</button><button class="smallbtn danger" onclick="deleteCourse('${c.id}')">Poista</button></div>`;
+    box.appendChild(div);
+  });
+}
+
+function startRound(){
+  if(!state.courses.length) return alert('Lisää ensin kenttä.');
+  const course = state.courses.find(c=>c.id===document.getElementById('courseSelect').value) || state.courses[0];
+  currentRound = {
+    id: uid(), date: document.getElementById('dateInput').value || today(), course: course.name, pars:[...course.pars], scores: Array(course.pars.length).fill(null), puttAt: Array(course.pars.length).fill(null),
+    type: document.getElementById('typeInput').value, wind: document.getElementById('windInput').value, rain: document.getElementById('rainInput').value,
+    mood: document.getElementById('moodInput').value, note: document.getElementById('noteInput').value.trim()
+  };
+  currentHole = 0;
+  document.getElementById('startCard').classList.add('hidden'); document.getElementById('roundCard').classList.remove('hidden');
+  renderRound();
+}
+function renderRound(){
+  if(!currentRound) return;
+  ensureRoundArrays(currentRound);
+  const par=currentRound.pars[currentHole], score=currentRound.scores[currentHole], putt=currentRound.puttAt[currentHole];
+  document.getElementById('courseName').textContent = currentRound.course;
+  document.getElementById('holeTitle').textContent = `Väylä ${currentHole+1} / ${currentRound.pars.length}`;
+  document.getElementById('holePar').textContent = par;
+  document.getElementById('holeScore').textContent = score ?? '–';
+  document.getElementById('holeRelative').textContent = score == null ? 'Paina + tai −: aloittaa parista' : relText(score-par);
+  document.getElementById('puttHelp').textContent = puttText(score, putt);
+  highlightPuttButtons(putt);
+  renderHoleButtons(); updateSummary(); updateFooterVisibility();
+}
+function relText(n){ if(n===0) return 'Par'; return n>0 ? '+'+n : String(n); }
+function ensureRoundArrays(r){
+  if(!r.puttAt) r.puttAt = Array(r.pars.length).fill(null);
+  while(r.puttAt.length < r.pars.length) r.puttAt.push(null);
+}
+function puttText(score, putt){
+  if(putt == null) return 'Merkitse monennellako heitolla kiekko oli puttietäisyydellä.';
+  if(score == null) return `Puttietäisyydellä heiton ${putt} jälkeen. Valitse vielä väylätulos.`;
+  const attempts = score - putt;
+  if(attempts <= 0) return `Puttimerkintä ${putt}. Tarkista, että väylätulos on suurempi kuin tämä.`;
+  return attempts === 1 ? `Puttietäisyydellä heiton ${putt} jälkeen → sisään ensimmäisellä putilla.` : `Puttietäisyydellä heiton ${putt} jälkeen → ${attempts} puttia.`;
+}
+function highlightPuttButtons(putt){
+  document.querySelectorAll('.puttgrid button').forEach(b => b.classList.remove('ghost','primary'));
+  const buttons = Array.from(document.querySelectorAll('.puttgrid button'));
+  const idx = putt == null ? 0 : Math.min(Math.max(Number(putt),1),5);
+  if(buttons[idx]) buttons[idx].classList.add('ghost');
+}
+function setPuttAt(n){
+  ensureRoundArrays(currentRound);
+  currentRound.puttAt[currentHole] = n;
+  renderRound();
+}
+function setRelative(rel){ currentRound.scores[currentHole] = currentRound.pars[currentHole] + rel; renderRound(); }
+function adjustScore(delta){
+  const par=currentRound.pars[currentHole];
+  if(currentRound.scores[currentHole] == null){
+    currentRound.scores[currentHole] = par;
+  } else {
+    currentRound.scores[currentHole] = Math.max(1, currentRound.scores[currentHole] + delta);
+  }
+  renderRound();
+}
+function clearHole(){ currentRound.scores[currentHole] = null; renderRound(); }
+function prevHole(){ if(currentHole>0){ currentHole--; renderRound(); } }
+function nextHole(){ if(currentHole<currentRound.pars.length-1){ currentHole++; renderRound(); } }
+function goHole(i){ currentHole=i; renderRound(); }
+function renderHoleButtons(){
+  const box=document.getElementById('holeButtons'); box.innerHTML='';
+  currentRound.pars.forEach((p,i)=>{
+    const b=document.createElement('button'); b.textContent = `${i+1}: ${currentRound.scores[i] ?? '–'}`; if(i===currentHole) b.className='ghost'; b.onclick=()=>goHole(i); box.appendChild(b);
+  });
+}
+function roundTotals(r){
+  ensureRoundArrays(r);
+  const total = r.scores.reduce((a,b)=> a + (Number.isFinite(Number(b)) ? Number(b) : 0), 0);
+  const parTotal = r.pars.reduce((a,b,i)=> a + (r.scores[i] == null ? 0 : Number(b)), 0);
+  let puttChances=0, onePutts=0, puttAttempts=0;
+  r.scores.forEach((score,i)=>{
+    const putt = r.puttAt[i];
+    if(score != null && putt != null){
+      const attempts = Number(score) - Number(putt);
+      if(attempts > 0){ puttChances++; puttAttempts += attempts; if(attempts === 1) onePutts++; }
+    }
+  });
+  const puttPct = puttChances ? Math.round((onePutts / puttChances) * 100) : '';
+  return {total, parTotal, scorePar: total - parTotal, puttChances, onePutts, puttAttempts, puttPct};
+}
+function updateSummary(){ const t=roundTotals(currentRound); document.getElementById('sumScore').textContent=t.total; document.getElementById('sumPar').textContent=t.parTotal; document.getElementById('sumRel').textContent=relText(t.scorePar); document.getElementById('sumPutt').textContent=t.puttPct === '' ? '–' : t.puttPct + '%'; }
+function saveRound(){
+  if(!currentRound) return;
+  const empty = currentRound.scores.filter(x=>x==null).length;
+  if(empty && !confirm(`Tallennetaanko kierros? ${empty} väylää on tyhjänä.`)) return;
+  state.rounds.push(currentRound); saveState(); currentRound=null;
+  document.getElementById('roundCard').classList.add('hidden'); document.getElementById('startCard').classList.remove('hidden');
+  document.getElementById('noteInput').value=''; renderHistory(); showTab('history');
+}
+function cancelRound(){ if(confirm('Perutaanko tallentamaton kierros?')){ currentRound=null; document.getElementById('roundCard').classList.add('hidden'); document.getElementById('startCard').classList.remove('hidden'); updateFooterVisibility(); } }
+
+function renderHistory(){
+  const box=document.getElementById('historyList'); box.innerHTML='';
+  if(!state.rounds.length){ box.innerHTML='<p class="muted">Ei tallennettuja kierroksia vielä.</p>'; return; }
+  const table=document.createElement('table');
+  table.innerHTML='<thead><tr><th>Pvm</th><th>Kenttä</th><th>Total</th><th>Par</th><th>+/-</th><th>1-putti</th><th></th></tr></thead>'; 
+  const tb=document.createElement('tbody');
+  [...state.rounds].reverse().forEach(r=>{ const t=roundTotals(r); const tr=document.createElement('tr'); tr.innerHTML=`<td>${r.date}</td><td>${escapeHtml(r.course)}</td><td>${t.total}</td><td>${t.parTotal}</td><td>${relText(t.scorePar)}</td><td>${t.puttPct === '' ? '–' : t.puttPct + '%'}</td><td><button class="smallbtn danger" onclick="deleteRound('${r.id}')">Poista</button></td>`; tb.appendChild(tr); });
+  table.appendChild(tb); box.appendChild(table);
+}
+function deleteRound(id){ if(confirm('Poistetaanko kierros?')){ state.rounds=state.rounds.filter(r=>r.id!==id); saveState(); renderHistory(); } }
+
+function csvHeaders(){
+  const heads=['pvm','paikka','tyyppi','tuuli','sade','fiilis'];
+  for(let i=1;i<=18;i++){ heads.push('v'+i); heads.push('p'+i); heads.push('putt'+i); }
+  heads.push('total','par_total','score_par','putt_chances','one_putts','putt_attempts','one_putt_pct','huomio'); return heads;
+}
+function csvRows(){
+  const rows=[csvHeaders()];
+  state.rounds.forEach(r=>{
+    const t=roundTotals(r); const row=[r.date,r.course,r.type,r.wind,r.rain,r.mood];
+    ensureRoundArrays(r);
+    for(let i=0;i<18;i++){ row.push(r.scores[i] ?? ''); row.push(r.pars[i] ?? ''); row.push(r.puttAt[i] ?? ''); }
+    row.push(t.total,t.parTotal,t.scorePar,t.puttChances,t.onePutts,t.puttAttempts,t.puttPct,r.note || ''); rows.push(row);
+  });
+  return rows;
+}
+function toCSV(){ return csvRows().map(row => row.map(csvCell).join(';')).join('\n'); }
+function csvCell(v){ const s=String(v ?? ''); return /[;"\n]/.test(s) ? '"'+s.replaceAll('"','""')+'"' : s; }
+function downloadCSV(){
+  const blob = new Blob([toCSV()], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='frisbeegolf_tulokset.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
+async function copyCSV(){ try{ await navigator.clipboard.writeText(toCSV()); alert('CSV kopioitu leikepöydälle.'); } catch(e){ alert('Kopiointi ei onnistunut. Käytä Vie CSV -painiketta.'); } }
+function updateFooterVisibility(){
+  const footer = document.getElementById('footerBar');
+  if(!footer) return;
+  const isPlaying = currentRound && !document.getElementById('roundCard').classList.contains('hidden');
+  footer.classList.toggle('hidden', !!isPlaying);
+}
+
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+
+// init
+document.getElementById('dateInput').value = today();
+renderParInputs(); fillDefaultPar(); refreshAll(); updateFooterVisibility();
+</script>
+</body>
+</html>
