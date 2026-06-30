@@ -36,6 +36,22 @@
     .big { font-size: 42px; font-weight: 800; text-align:center; margin:6px 0; }
     .scoreNav { display:grid; grid-template-columns: 1fr 1.4fr 1fr; align-items:center; gap:10px; margin:8px 0; }
     .scoreNav button { min-height:64px; font-size:22px; }
+    .holeNavRow {
+      display: grid;
+      grid-template-columns: 72px 1fr 72px;
+      gap: 10px;
+      margin: 12px 0;
+      align-items: stretch;
+    }
+
+    .holeNavRow button {
+      min-height: 58px;
+      font-size: 22px;
+    }
+
+    .holeNavRow button:nth-child(2) {
+      font-size: 18px;
+    }
     .puttbox { background:#f8fafc; border:1px solid var(--line); border-radius:16px; padding:12px; margin:12px 0; }
     .puttgrid { display:grid; grid-template-columns: repeat(6, 1fr); gap:6px; margin-top:8px; }
     .puttgrid button { padding:10px 8px; font-size:14px; }
@@ -111,10 +127,10 @@
         </div>
         <button class="primary" onclick="adjustScore(1)" aria-label="Lisää tulosta">+</button>
       </div>
-      <div class="row3">
-        <button onclick="prevHole()">← Edellinen</button>
+      <div class="holeNavRow">
+        <button onclick="prevHole()" aria-label="Edellinen väylä">←</button>
         <button onclick="clearHole()">Tyhjennä</button>
-        <button onclick="nextHole()">Seuraava →</button>
+        <button onclick="nextHole()" aria-label="Seuraava väylä">→</button>
       </div>
       <div class="puttbox">
         <div><b>Puttietäisyys</b> <span class="muted">(~15 m)</span></div>
